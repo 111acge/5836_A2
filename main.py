@@ -1,19 +1,14 @@
 # Author: Ethan FAN
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 from functools import wraps
 import numpy as np
-import sklearn.linear_model
-from PIL.Image import module
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import (mean_squared_error, r2_score, mean_absolute_error,
-                             accuracy_score, confusion_matrix, roc_curve, auc)
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from scipy import stats
-import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (mean_squared_error, r2_score, accuracy_score, roc_curve, auc)
+from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import GridSearchCV
 
 DATA_FILE = "data/abalone.data"
 
@@ -66,16 +61,14 @@ def question_decorator(part_number, question_number):
 
 
 @question_decorator(1, 1)
-def get_and_clean_data() -> pd.DataFrame:
+def get_and_clean_data():
     column_names = ["Sex", "Length", "Diameter", "Height", "Whole weight",
                     "Shucked weight", "Viscera weight", "Shell weight", "Rings"]
     data_format = pd.read_csv(DATA_FILE, names=column_names)
     gender_map = {'M': 0, 'F': 1, 'I': 2}
     data_format['Sex'] = data_format['Sex'].map(gender_map)
     data_format.to_csv("data/cleaned_data.csv", index=False)
-
     print(f"Data has been cleaned and saved to data/cleaned_data.csv. \nThe top 5 data: \n{data_format.head(n=5)}")
-
     return data_format
 
 
@@ -234,34 +227,22 @@ def create_train_test_split(data, experiment_number):
 
 
 @question_decorator(2, 1)
-def linear_regression(train_data_in, test_data_in):
-    # Load the data
-    # train_data = pd.read_csv('data/train_data_exp_6040.csv')
-    # test_data = pd.read_csv('data/test_data_exp_6040.csv')
-    train_data = train_data_in
-    test_data = test_data_in
-
+def linear_regression(train_data, test_data):
     # Separate features and target
     X_train = train_data.drop('Rings', axis=1)
     y_train = train_data['Rings']
     X_test = test_data.drop('Rings', axis=1)
     y_test = test_data['Rings']
 
-    # Scale the features
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
-    # Train the model (Linear Regression)
+    # Train the model
     model = LinearRegression()
-    # model = LogisticRegression(multi_class='ovr', solver='lbfgs', max_iter=1000)
-    model.fit(X_train_scaled, y_train)
+    model.fit(X_train, y_train)
 
     # Make predictions
-    y_train_pred = model.predict(X_train_scaled)
-    y_test_pred = model.predict(X_test_scaled)
+    y_train_pred = model.predict(X_train)
+    y_test_pred = model.predict(X_test)
 
-    # Round predictions to nearest integer
+    # Round predictions to nearest integer for classification metrics
     y_train_pred_rounded = np.round(y_train_pred).astype(int)
     y_test_pred_rounded = np.round(y_test_pred).astype(int)
 
@@ -270,60 +251,51 @@ def linear_regression(train_data_in, test_data_in):
     test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))
     train_r2 = r2_score(y_train, y_train_pred)
     test_r2 = r2_score(y_test, y_test_pred)
-    train_mae = mean_absolute_error(y_train, y_train_pred)
-    test_mae = mean_absolute_error(y_test, y_test_pred)
     train_accuracy = accuracy_score(y_train, y_train_pred_rounded)
     test_accuracy = accuracy_score(y_test, y_test_pred_rounded)
-
-    # Calculate Spearman's rank correlation
-    train_spearman = stats.spearmanr(y_train, y_train_pred)[0]
-    test_spearman = stats.spearmanr(y_test, y_test_pred)[0]
 
     print(f"Train RMSE: {train_rmse:.4f}")
     print(f"Test RMSE: {test_rmse:.4f}")
     print(f"Train R-squared: {train_r2:.4f}")
     print(f"Test R-squared: {test_r2:.4f}")
-    print(f"Train MAE: {train_mae:.4f}")
-    print(f"Test MAE: {test_mae:.4f}")
     print(f"Train Accuracy: {train_accuracy:.4f}")
     print(f"Test Accuracy: {test_accuracy:.4f}")
-    print(f"Train Spearman's Rank Correlation: {train_spearman:.4f}")
-    print(f"Test Spearman's Rank Correlation: {test_spearman:.4f}")
 
-    # # Compute ROC curve and AUC for each class
-    # unique_rings = np.unique(np.concatenate([y_train, y_test]))
-    # n_classes = len(unique_rings)
-    # fpr = dict()
-    # tpr = dict()
-    # roc_auc = dict()
+    # Visualize predictions
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y_test, y_test_pred, alpha=0.5)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+    plt.xlabel("Actual Ring Age")
+    plt.ylabel("Predicted Ring Age")
+    plt.title("Actual vs Predicted Ring Age")
+    plt.tight_layout()
+    plt.savefig('images/actual_vs_predicted.png')
+    plt.close()
+
+    # Feature importance
+    feature_importance = pd.DataFrame({'feature': X_train.columns, 'importance': abs(model.coef_)})
+    feature_importance = feature_importance.sort_values('importance', ascending=False)
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(feature_importance['feature'], feature_importance['importance'])
+    plt.xticks(rotation=90)
+    plt.xlabel("Features")
+    plt.ylabel("Absolute Coefficient Value")
+    plt.title("Feature Importance")
+    plt.tight_layout()
+    plt.savefig('images/feature_importance.png')
+    plt.close()
+
+    ### ###################################################################
+    # 这个ROC和AUC我完全没搞懂是什么东西，内容是GPT给的，下边这个部分解除注释运行会报错
     #
-    # for i, ring_value in enumerate(unique_rings):
-    #     y_test_binary = (y_test == ring_value).astype(int)
-    #     y_score = -np.abs(y_test_pred - ring_value)  # Negative absolute difference as the score
+    # # ROC curve and AUC score
+    # fpr, tpr, _ = roc_curve(y_test, y_test_pred)
+    # roc_auc = auc(fpr, tpr)
     #
-    #     fpr[i], tpr[i], _ = roc_curve(y_test_binary, y_score)
-    #     roc_auc[i] = auc(fpr[i], tpr[i])
-    #
-    # # Compute micro-average ROC curve and AUC
-    # y_test_binary = np.eye(n_classes)[np.searchsorted(unique_rings, y_test)]
-    # y_score = -np.abs(y_test_pred.reshape(-1, 1) - unique_rings)  # Broadcasting
-    # fpr["micro"], tpr["micro"], _ = roc_curve(y_test_binary.ravel(), y_score.ravel())
-    # roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-    #
-    # # Plot ROC curves
-    # plt.figure(figsize=(10, 8))
-    # plt.plot(fpr["micro"], tpr["micro"],
-    #          label='micro-average ROC curve (area = {0:0.2f})'
-    #                ''.format(roc_auc["micro"]),
-    #          color='deeppink', linestyle=':', linewidth=4)
-    #
-    # colors = plt.cm.get_cmap('tab20')(np.linspace(0, 1, n_classes))
-    # for i, color in zip(range(n_classes), colors):
-    #     plt.plot(fpr[i], tpr[i], color=color, lw=2,
-    #              label='ROC curve of class {0} (area = {1:0.2f})'
-    #                    ''.format(unique_rings[i], roc_auc[i]))
-    #
-    # plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    # plt.figure(figsize=(8, 6))
+    # plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
+    # plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
     # plt.xlim([0.0, 1.0])
     # plt.ylim([0.0, 1.05])
     # plt.xlabel('False Positive Rate')
@@ -333,54 +305,254 @@ def linear_regression(train_data_in, test_data_in):
     # plt.savefig('images/roc_curve.png')
     # plt.close()
     #
-    # # Print average AUC
-    # print(f"Average AUC: {np.mean(list(roc_auc.values())):.4f}")
-    #
-    # # Visualize predictions
-    # plt.figure(figsize=(10, 6))
-    # plt.scatter(y_test, y_test_pred, alpha=0.5)
-    # plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
-    # plt.xlabel("Actual Ring Age")
-    # plt.ylabel("Predicted Ring Age")
-    # plt.title("Actual vs Predicted Ring Age")
-    # plt.tight_layout()
-    # plt.savefig('images/actual_vs_predicted.png')
-    # plt.close()
-    #
-    # # Feature importance
-    # feature_importance = pd.DataFrame({'feature': X_train.columns, 'importance': abs(model.coef_)})
-    # feature_importance = feature_importance.sort_values('importance', ascending=False)
-    #
-    # plt.figure(figsize=(10, 6))
-    # plt.bar(feature_importance['feature'], feature_importance['importance'])
-    # plt.xticks(rotation=90)
-    # plt.xlabel("Features")
-    # plt.ylabel("Absolute Coefficient Value")
-    # plt.title("Feature Importance")
-    # plt.tight_layout()
-    # plt.savefig('images/feature_importance.png')
-    # plt.close()
-    #
-    # # Confusion Matrix
-    # cm = confusion_matrix(y_test, y_test_pred_rounded)
-    # plt.figure(figsize=(12, 10))
-    # sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    # plt.xlabel('Predicted')
-    # plt.ylabel('Actual')
-    # plt.title('Confusion Matrix')
-    # plt.tight_layout()
-    # plt.savefig('images/confusion_matrix.png')
-    # plt.close()
-    #
-    # print(
-    #     "Plots have been saved as 'images/actual_vs_predicted.png', 'images/feature_importance.png', 'images/confusion_matrix.png', and 'images/roc_curve.png'")
+    # print(f"AUC Score: {roc_auc:.4f}")
+    ### ###################################################################
 
-    # Calculate and print the unique values in train and test sets
-    train_unique = np.unique(y_train)
-    test_unique = np.unique(y_test)
-    print(f"Unique values in train set: {train_unique}")
-    print(f"Unique values in test set: {test_unique}")
-    print(f"Values in test set but not in train set: {np.setdiff1d(test_unique, train_unique)}")
+    return model, feature_importance
+
+
+@question_decorator(2, 2)
+def linear_regression_selected_features(train_data, test_data, first_feature, second_feature):
+    # Select features
+    features = [first_feature, second_feature]
+
+    # Separate features and target
+    X_train = train_data[features]
+    y_train = train_data['Rings']
+    X_test = test_data[features]
+    y_test = test_data['Rings']
+
+    # Train the model
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    # Make predictions
+    y_train_pred = model.predict(X_train)
+    y_test_pred = model.predict(X_test)
+
+    # Round predictions to nearest integer for classification metrics
+    y_train_pred_rounded = np.round(y_train_pred).astype(int)
+    y_test_pred_rounded = np.round(y_test_pred).astype(int)
+
+    # Calculate metrics
+    train_rmse = np.sqrt(mean_squared_error(y_train, y_train_pred))
+    test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))
+    train_r2 = r2_score(y_train, y_train_pred)
+    test_r2 = r2_score(y_test, y_test_pred)
+    train_accuracy = accuracy_score(y_train, y_train_pred_rounded)
+    test_accuracy = accuracy_score(y_test, y_test_pred_rounded)
+
+    print(f"Selected features: {features}")
+    print(f"Train RMSE: {train_rmse:.4f}")
+    print(f"Test RMSE: {test_rmse:.4f}")
+    print(f"Train R-squared: {train_r2:.4f}")
+    print(f"Test R-squared: {test_r2:.4f}")
+    print(f"Train Accuracy: {train_accuracy:.4f}")
+    print(f"Test Accuracy: {test_accuracy:.4f}")
+
+    # Visualize predictions
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y_test, y_test_pred, alpha=0.5)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+    plt.xlabel("Actual Ring Age")
+    plt.ylabel("Predicted Ring Age")
+    plt.title("Actual vs Predicted Ring Age (Selected Features)")
+    plt.savefig('images/actual_vs_predicted_selected_features.png')
+    plt.close()
+
+    return model, train_rmse, test_rmse, train_r2, test_r2, train_accuracy, test_accuracy
+
+
+@question_decorator(2, 3)
+def compare_regression_models(train_data, test_data):
+    # Separate features and target
+    X_train = train_data.drop('Rings', axis=1)
+    y_train = train_data['Rings']
+    X_test = test_data.drop('Rings', axis=1)
+    y_test = test_data['Rings']
+
+    # Initialize model
+    model = LinearRegression()
+
+    # Initialize scaler
+    scaler = StandardScaler()
+
+    # Lists to store results
+    normalizations = ['Without Normalization', 'With Normalization']
+    results = []
+
+    for norm in normalizations:
+        if norm == 'With Normalization':
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_test_scaled = scaler.transform(X_test)
+        else:
+            X_train_scaled = X_train
+            X_test_scaled = X_test
+
+        # Fit model
+        model.fit(X_train_scaled, y_train)
+
+        # Make predictions
+        y_train_pred = model.predict(X_train_scaled)
+        y_test_pred = model.predict(X_test_scaled)
+
+        # Round predictions to nearest integer
+        y_train_pred_rounded = np.round(y_train_pred).astype(int)
+        y_test_pred_rounded = np.round(y_test_pred).astype(int)
+
+        # Calculate metrics
+        train_rmse = np.sqrt(mean_squared_error(y_train, y_train_pred))
+        test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))
+        train_r2 = r2_score(y_train, y_train_pred)
+        test_r2 = r2_score(y_test, y_test_pred)
+        train_accuracy = accuracy_score(y_train, y_train_pred_rounded)
+        test_accuracy = accuracy_score(y_test, y_test_pred_rounded)
+
+        results.append({
+            'Normalization': norm,
+            'Train RMSE': train_rmse,
+            'Test RMSE': test_rmse,
+            'Train R-squared': train_r2,
+            'Test R-squared': test_r2,
+            'Train Accuracy': train_accuracy,
+            'Test Accuracy': test_accuracy
+        })
+
+    # Convert results to DataFrame for easy viewing
+    results_df = pd.DataFrame(results)
+
+    # Print results
+    print(results_df.to_string(index=False))
+
+    # Visualize results
+    metrics = ['RMSE', 'R-squared', 'Accuracy']
+    for metric in metrics:
+        plt.figure(figsize=(10, 6))
+        x = np.arange(len(normalizations))
+        width = 0.35
+
+        plt.bar(x - width / 2, results_df[f'Train {metric}'], width, label='Train', color='blue', alpha=0.7)
+        plt.bar(x + width / 2, results_df[f'Test {metric}'], width, label='Test', color='red', alpha=0.7)
+
+        plt.xlabel('Normalization')
+        plt.ylabel(metric)
+        plt.title(f'Comparison of {metric} With and Without Normalization')
+        plt.xticks(x, normalizations)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'images/comparison_{metric.lower()}.png')
+        plt.close()
+
+    return results_df
+
+
+@question_decorator(2, 4)
+def neural_network_regression(train_data, test_data):
+    # Separate features and target
+    X_train = train_data.drop('Rings', axis=1)
+    y_train = train_data['Rings']
+    X_test = test_data.drop('Rings', axis=1)
+    y_test = test_data['Rings']
+
+    # Normalize input data
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # Define parameter grid for GridSearchCV
+    param_grid = {
+        'hidden_layer_sizes': [(10,), (20,), (30,), (10, 10), (20, 10)],
+        'learning_rate_init': [0.001, 0.01, 0.1],
+        'max_iter': [1000]
+    }
+
+    # Initialize MLPRegressor
+    mlp = MLPRegressor(random_state=6040)
+
+    # Perform GridSearchCV
+    grid_search = GridSearchCV(mlp, param_grid, cv=5, scoring='neg_mean_squared_error')
+    grid_search.fit(X_train_scaled, y_train)
+
+    # Get best model
+    best_model = grid_search.best_estimator_
+
+    # Make predictions
+    y_train_pred = best_model.predict(X_train_scaled)
+    y_test_pred = best_model.predict(X_test_scaled)
+
+    # Calculate metrics
+    train_rmse = np.sqrt(mean_squared_error(y_train, y_train_pred))
+    test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))
+    train_r2 = r2_score(y_train, y_train_pred)
+    test_r2 = r2_score(y_test, y_test_pred)
+
+    print("Neural Network Results:")
+    print(f"Best parameters: {grid_search.best_params_}")
+    print(f"Train RMSE: {train_rmse:.4f}")
+    print(f"Test RMSE: {test_rmse:.4f}")
+    print(f"Train R-squared: {train_r2:.4f}")
+    print(f"Test R-squared: {test_r2:.4f}")
+
+    # Visualize predictions
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y_test, y_test_pred, alpha=0.5)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+    plt.xlabel("Actual Ring Age")
+    plt.ylabel("Predicted Ring Age")
+    plt.title("Neural Network: Actual vs Predicted Ring Age")
+    plt.savefig('images/nn_actual_vs_predicted.png')
+    plt.close()
+
+    return best_model, train_rmse, test_rmse, train_r2, test_r2
+
+
+@question_decorator(2, 5)
+def compare_models():
+    linear_results = {
+        'train_rmse': results_df.loc[results_df['Normalization'] == 'With Normalization', 'Train RMSE'].values[0],
+        'test_rmse': results_df.loc[results_df['Normalization'] == 'With Normalization', 'Test RMSE'].values[0],
+        'train_r2': results_df.loc[results_df['Normalization'] == 'With Normalization', 'Train R-squared'].values[0],
+        'test_r2': results_df.loc[results_df['Normalization'] == 'With Normalization', 'Test R-squared'].values[0]
+    }
+
+    nn_results = {
+        'train_rmse': nn_train_rmse,
+        'test_rmse': nn_test_rmse,
+        'train_r2': nn_train_r2,
+        'test_r2': nn_test_r2
+    }
+    print("\nModel Comparison:")
+    print("Linear Regression vs Neural Network")
+    print(f"{'Metric':<15}{'Linear Regression':<20}{'Neural Network':<20}")
+    print("-" * 55)
+    print(f"{'Train RMSE':<15}{linear_results['train_rmse']:<20.4f}{nn_results['train_rmse']:<20.4f}")
+    print(f"{'Test RMSE':<15}{linear_results['test_rmse']:<20.4f}{nn_results['test_rmse']:<20.4f}")
+    print(f"{'Train R2':<15}{linear_results['train_r2']:<20.4f}{nn_results['train_r2']:<20.4f}")
+    print(f"{'Test R2':<15}{linear_results['test_r2']:<20.4f}{nn_results['test_r2']:<20.4f}")
+
+    print("\nDiscussion:")
+    print("1. Performance Comparison:")
+    if nn_results['test_rmse'] < linear_results['test_rmse']:
+        print("   - The Neural Network model outperforms the Linear Regression model in terms of RMSE.")
+    else:
+        print("   - The Linear Regression model performs better than or similarly to the Neural Network model.")
+
+    print("2. Overfitting:")
+    lr_overfit = linear_results['train_rmse'] - linear_results['test_rmse']
+    nn_overfit = nn_results['train_rmse'] - nn_results['test_rmse']
+    if abs(lr_overfit) < abs(nn_overfit):
+        print("   - The Linear Regression model seems to generalize better, showing less overfitting.")
+    else:
+        print("   - The Neural Network model might be overfitting more than the Linear Regression model.")
+
+    print("3. Further Improvements:")
+    print("   - Feature engineering: Create new features or transform existing ones.")
+    print("   - Regularization: Apply L1 or L2 regularization to prevent overfitting.")
+    print("   - Ensemble methods: Combine multiple models for better predictions.")
+    print("   - Cross-validation: Use k-fold cross-validation for more robust model evaluation.")
+    print("   - Hyperparameter tuning: Further fine-tune the neural network architecture and parameters.")
+    print("   - Data augmentation: Generate synthetic data to increase the dataset size.")
+    print("   - Handle outliers: Identify and treat outliers that might affect model performance.")
 
 
 if __name__ == "__main__":
@@ -395,5 +567,13 @@ if __name__ == "__main__":
     # P1Q5
     train_data, test_data = create_train_test_split(cleaned_data, experiment_number=6040)
     # P2Q1
-    linear_regression(train_data, test_data)
+    model, feature_importance = linear_regression(train_data, test_data)
     # P2Q2
+    model_selected, train_rmse_selected, test_rmse_selected, train_r2_selected, test_r2_selected, train_accuracy_selected, test_accuracy_selected = linear_regression_selected_features(
+        train_data, test_data, first_feature, second_feature)
+    # P2Q3
+    results_df = compare_regression_models(train_data, test_data)
+    # P2Q4
+    nn_model, nn_train_rmse, nn_test_rmse, nn_train_r2, nn_test_r2 = neural_network_regression(train_data, test_data)
+    # P2Q5
+    compare_models()
