@@ -287,7 +287,7 @@ def linear_regression(train_data, test_data):
     plt.close()
 
     ### ###################################################################
-    # 这个ROC和AUC我完全没搞懂是什么东西，内容是GPT给的，下边这个部分解除注释运行会报错
+    # 这个ROC和AUC我完全没搞懂是什么东西，内容是GPT给的，但是GPT给的这个部分解除注释运行会报错
     #
     # # ROC curve and AUC score
     # fpr, tpr, _ = roc_curve(y_test, y_test_pred)
@@ -575,5 +575,5 @@ if __name__ == "__main__":
     results_df = compare_regression_models(train_data, test_data)
     # P2Q4
     nn_model, nn_train_rmse, nn_test_rmse, nn_train_r2, nn_test_r2 = neural_network_regression(train_data, test_data)
-    # P2Q5
+    # P2Q5 这个部分主要是评价模型，不知道说什么，所以也是GPT给的
     compare_models()
