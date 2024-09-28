@@ -1,4 +1,6 @@
-# This is an Assignment
-
-This project is a part of an academic course.   The project includes implementations of several algorithms and models relevant to the field.
-
+# 5836 A2
+# **不要转载给组外任何人！！！**
+# ROC和AUC的部分有问题
+# P2Q5 是评论部分，目前是GPT给的评论，要修改
+* 所有评论部分可能都有问题
+# 要检查有没有漏做的题目
