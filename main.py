@@ -76,12 +76,21 @@ def get_and_clean_data():
 def plot_correlation_hot(data):
     corr_mat = data.corr()
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(12, 10))
     plt.imshow(corr_mat, interpolation='nearest', cmap='hot')
     plt.colorbar()
     plt.title("Correlation Matrix")
     plt.xticks(range(len(data.columns)), data.columns, rotation=90)
     plt.yticks(range(len(data.columns)), data.columns)
+
+    for i in range(len(data.columns)):
+        for j in range(len(data.columns)):
+            value = corr_mat.iloc[i, j]
+            color = "white" if value < 0 else "black"
+            plt.text(j, i, f'{value:.2f}',
+                            ha="center", va="center", color=color,
+                            fontweight='bold')
+
     plt.tight_layout()
     plt.savefig('images/correlation_hot.png')
     plt.close()
@@ -89,7 +98,6 @@ def plot_correlation_hot(data):
     print(f"Correlation hot map has been saved in images/correlation_hot.png.")
 
     return corr_mat
-
 
 @question_decorator(1, 3)
 def analyze_and_plot_correlations(data, corr_matrix):
