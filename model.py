@@ -1,4 +1,4 @@
-# Author: Ethan FAN
+# Author: Ethan FAN; Zengqianyi HU
 import os
 import matplotlib.gridspec as gridspec
 import pandas as pd
@@ -11,7 +11,7 @@ from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, roc_cu
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import GridSearchCV
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 import random
 from sklearn.utils.class_weight import compute_class_weight
 import matplotlib
@@ -866,8 +866,8 @@ def neural_network_regression(train_data, test_data):
     grid_search.fit(X_train_scaled, y_train)
 
     # Explicitly output results for each parameter combination
-    results = pd.DataFrame(grid_search.cv_results_)
-    for i, row in results.iterrows():
+    grid_results = pd.DataFrame(grid_search.cv_results_)
+    for i, row in grid_results.iterrows():
         params = row['params']
         mean_score = -row['mean_test_score']  # Convert to positive MSE
         std_score = row['std_test_score']
