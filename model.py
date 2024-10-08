@@ -1,7 +1,6 @@
 # Author: Ethan FAN
 import os
 import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
 import pandas as pd
 from functools import wraps
 import numpy as np
@@ -15,6 +14,10 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import random
 from sklearn.utils.class_weight import compute_class_weight
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 DATA_FILE = "data/abalone.data"
 IMAGE_DIR = "images"
@@ -563,9 +566,11 @@ def linear_regression(train_data, test_data):
                  ha='left', va='center', fontsize=7)
 
     # Adjust layout and save figure
-    plt.tight_layout()
-    plt.savefig('images/regression_and_classification_analysis.png', dpi=300, bbox_inches='tight')
-    plt.close()
+    plt.savefig('images/regression_and_classification_analysis.png', dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    plt.close('all')
+
+    print(f'Regressions have been saved as \'images/regression_and_classification_analysis.png\'')
 
 
 @question_decorator(2, 2)
@@ -692,7 +697,10 @@ def compare_regression_models(train_data, test_data):
     plt.savefig('images/model_comparison_with_auc.png', bbox_inches='tight')
     plt.close()
 
+    print(f'\'images/model_comparison_with_auc.png\' has been saved.')
+
     return results_df
+
 
 @question_decorator(2, 3)
 def combined_regression_analysis(train_data, test_data, first_feature, second_feature):
@@ -798,7 +806,10 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
     plt.savefig('images/regression_comparison.png')
     plt.close()
 
+    print('\'images/regression_comparison.png\' has been saved.')
+
     return results
+
 
 @question_decorator(2, 4)
 def neural_network_regression(train_data, test_data):
@@ -833,9 +844,15 @@ def neural_network_regression(train_data, test_data):
 
     # Define parameter range for grid search
     param_grid = {
-        'hidden_layer_sizes': [(32,), (64,), (128,), (32, 32), (64, 64)],
+        'hidden_layer_sizes': [
+            (50,), (100,),  # 单层，不同神经元数
+            (50, 25), (25, 10),  # 两层，逐渐减少
+            (25, 50), (10, 25),  # 两层，逐渐增加
+            (50, 50), (25, 25),  # 两层，相同大小
+            (50, 25, 10), (10, 25, 50)  # 三层，金字塔结构
+        ],
         'learning_rate_init': [0.1, 0.01, 0.001],
-        'max_iter': [1000],
+        'max_iter': [10000],
         'solver': ['sgd']
     }
 
@@ -897,11 +914,15 @@ def neural_network_regression(train_data, test_data):
     plt.savefig('images/nn_actual_vs_predicted.png')
     plt.close()
 
+    print('\'images/nn_actual_vs_predicted.png\' has been saved.')
+
     return best_model, test_rmse, test_r2
+
 
 @question_decorator(2, 5)
 def compare_models():
     pass
+
 
 if __name__ == "__main__":
     # Part 1: Data Processing
