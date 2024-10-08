@@ -28,6 +28,7 @@ else:
     print(f"Directory already exists: {IMAGE_DIR}")
 
 """
+Dataset Information:
 Predict the Ring age in years
 
 Attribute       Type        Unit    Description
@@ -41,8 +42,9 @@ Viscera weight  Continuous  grams   Gut weight (after bleeding)
 Shell weight    Continuous  grams   After being dried
 Rings           Integer     --      Raw data (ignore +1.5)
 
-Ignore the +1.5 in ring-age and use the raw data
+Note: Ignore the +1.5 in ring-age and use the raw data
 
+Statistical Summary:
            Length   Diam  Height  Whole  Shucked  Viscera  Shell   Rings
 Statistic                                                               
 Min         0.075  0.055   0.000  0.002    0.001    0.001  0.002   1.000
@@ -57,7 +59,15 @@ Source: https://archive.ics.uci.edu/ml/datasets/abalone
 
 def question_decorator(part_number, question_number):
     """
-    装饰器，主要目的是使得各个部分的答案更加容易被识别
+    A decorator to clearly mark the beginning and end of each question's answer.
+    It prints a formatted header and footer for each function call.
+
+    Args:
+    part_number (int): The part number of the assignment (1 or 2).
+    question_number (int): The question number within the part.
+
+    Returns:
+    function: The wrapped function with added print statements.
     """
 
     def decorator(func):
@@ -82,75 +92,82 @@ def question_decorator(part_number, question_number):
 @question_decorator(1, 1)
 def get_and_clean_data():
     """
-    读取原始数据，进行清理处理，并保存清理后的数据。
+    Read, clean, and preprocess the raw data from the specified file.
 
-    此函数执行以下操作：
-    1. 定义数据列名
-    2. 从指定文件读取CSV数据
-    3. 将'Sex'列的字符值映射为数值
-    4. 将清理后的数据保存为新的CSV文件
-    5. 打印处理信息和数据预览
+    This function performs the following operations:
+    1. Defines column names for the dataset
+    2. Reads the CSV data from the specified file
+    3. Maps the 'Sex' column's character values to numeric values
+    4. Removes any rows with invalid or missing data
+    5. Saves the cleaned data to a new CSV file
+    6. Prints processing information and a preview of the data
 
-    :return: 处理后的DataFrame，包含清理和转换后的数据
+    Returns:
+    pandas.DataFrame: A DataFrame containing the cleaned and preprocessed data
     """
-    # 定义数据列名
+    # Define column names for the dataset
     column_names = ["Sex", "Length", "Diameter", "Height", "Whole weight",
                     "Shucked weight", "Viscera weight", "Shell weight", "Rings"]
 
-    # 读取CSV文件，使用指定的列名
+    # Read the CSV file using the specified column names
     data_format = pd.read_csv(DATA_FILE, names=column_names)
 
-    # 定义性别到数值的映射
+    # Define a mapping of sex categories to numeric values
     gender_map = {'M': -1, 'F': 1, 'I': 0}
 
-    # 将'Sex'列的值映射为数值
+    # Map the 'Sex' column values to numeric values
     data_format['Sex'] = data_format['Sex'].map(gender_map)
 
-    # 检查在替换后是否存在空值
+    # Check for and report any missing or invalid values after replacement
     print(f"Shape before cleaning: {data_format.shape}")
     for name in data_format.columns[1:]:
         print(f"{name} column error number:{data_format[name].isna().sum() + (data_format[name] <= 0).sum()}")
 
+    # Remove rows with invalid Height values or any missing values
     data_format = data_format[(data_format['Height'] > 0) & (~data_format.isna().any(axis=1))]
     print(f"Shape after cleaning: {data_format.shape}")
 
-    # 将清理后的数据保存为新的CSV文件
+    # Save the cleaned data to a new CSV file
     data_format.to_csv("data/cleaned_data.csv", index=False)
 
-    # 打印处理信息和数据预览
+    # Print processing information and a preview of the cleaned data
     print(f"Data has been cleaned and saved to data/cleaned_data.csv. \n\nThe top 5 data: \n{data_format.head(n=5)}")
 
-    # 返回处理后的DataFrame
+    # Return the cleaned DataFrame
     return data_format
 
 
 @question_decorator(1, 2)
 def plot_correlation_hot(data):
     """
-    绘制数据相关性热图并保存为图片文件。
+    Create and save a correlation heatmap for the input data.
 
-    该函数计算输入数据的相关性矩阵，然后使用热图可视化这个矩阵。
-    相关性值会直接显示在热图上。最后，图像会被保存为PNG文件。
+    This function calculates the correlation matrix for the input data,
+    visualizes it using a heatmap, and saves the resulting image as a PNG file.
+    Correlation values are displayed directly on the heatmap.
 
-    :param data: pandas DataFrame，包含要分析相关性的数据
-    :return: pandas DataFrame，包含计算得到的相关性矩阵
+    Args:
+    data (pandas.DataFrame): The input data to analyze for correlations
+
+    Returns:
+    pandas.DataFrame: The calculated correlation matrix
     """
-    # 计算相关性矩阵
+    # Calculate the correlation matrix
     corr_mat = data.corr()
 
-    # 创建图形并设置大小
+    # Create a new figure with specified size
     plt.figure(figsize=(12, 10))
 
-    # 使用热图显示相关性矩阵
+    # Create a heatmap of the correlation matrix
     plt.imshow(corr_mat, interpolation='nearest', cmap='viridis')
-    plt.colorbar()  # 添加颜色条
+    plt.colorbar()  # Add a color bar to the plot
     plt.title("Correlation Matrix")
 
-    # 设置x轴和y轴的标签
+    # Set x-axis and y-axis labels
     plt.xticks(range(len(data.columns)), data.columns, rotation=90)
     plt.yticks(range(len(data.columns)), data.columns)
 
-    # 在热图的每个单元格中添加相关性值
+    # Add correlation values to each cell in the heatmap
     for i in range(len(data.columns)):
         for j in range(len(data.columns)):
             value = corr_mat.iloc[i, j]
@@ -159,7 +176,7 @@ def plot_correlation_hot(data):
                      ha="center", va="center", color=color,
                      fontweight='bold')
 
-    # 调整布局并保存图像
+    # Adjust layout and save the image
     plt.tight_layout()
     plt.savefig('images/correlation_hot.png')
     plt.close()
@@ -172,58 +189,60 @@ def plot_correlation_hot(data):
 @question_decorator(1, 3)
 def analyze_and_plot_correlations(data, corr_matrix):
     """
-    分析数据相关性并绘制散点图。
+    Analyze correlations and create scatter plots for the most correlated features.
 
-    此函数执行以下操作：
-    1. 找出与 'Rings' 相关性最高的两个特征
-    2. 绘制这两个特征与 'Rings' 的散点图
-    3. 保存散点图
-    4. 打印分析结果和主要观察结果
+    This function performs the following operations:
+    1. Identifies the two features most correlated with 'Rings'
+    2. Creates scatter plots of these features against 'Rings'
+    3. Saves the scatter plots as an image file
+    4. Prints analysis results and key observations
 
-    :param data: pandas DataFrame，包含原始数据
-    :param corr_matrix: pandas DataFrame，包含相关性矩阵
-    :return: tuple，包含与 'Rings' 相关性最高的两个特征名
+    Args:
+    data (pandas.DataFrame): The input data for analysis
+    corr_matrix (pandas.DataFrame): The correlation matrix of the data
+
+    Returns:
+    tuple: Names of the two features most correlated with 'Rings'
     """
-    # 计算各特征与 'Rings' 的绝对相关性，并排除 'Rings' 自身
+    # Calculate absolute correlations with 'Rings', excluding 'Rings' itself
     corr_with_rings = corr_matrix['Rings'].drop('Rings').abs()
 
-    # 找出相关性最高的两个特征
+    # Identify the two features most correlated with 'Rings'
     top_two_features = corr_with_rings.nlargest(2)
     first_feature = top_two_features.index[0]
     second_feature = top_two_features.index[1]
 
-    # 创建一个包含两个子图的图形
+    # Create a figure with two subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
 
-    # 绘制第一个特征与 'Rings' 的散点图
+    # Create scatter plot for the first most correlated feature
     ax1.scatter(data[first_feature], data['Rings'], alpha=0.8)
     ax1.set_xlabel(first_feature)
     ax1.set_ylabel('Rings')
     ax1.set_title(f'Rings vs {first_feature} ')
 
-    # 绘制第二个特征与 'Rings' 的散点图
+    # Create scatter plot for the second most correlated feature
     ax2.scatter(data[second_feature], data['Rings'], alpha=0.8)
     ax2.set_xlabel(second_feature)
     ax2.set_ylabel('Rings')
     ax2.set_title(f'Rings vs {second_feature} ')
 
-    # 调整布局并保存图形
+    # Adjust layout and save the figure
     plt.tight_layout()
     plt.savefig('images/correlation_scatter_plots.png')
     plt.close()
 
-    # 打印结果
+    # Print results and observations
     print(f"Correlation scatter map has been saved in images/correlation_scatter_plots.png.")
     print(f"Top two correlated features with Rings:")
     print(f"1. {first_feature}: correlation of {corr_with_rings[first_feature]:.3f}")
     print(f"2. {second_feature}: correlation of {corr_with_rings[second_feature]:.3f}")
 
-    # 打印主要观察结果
-    print("\nMajor Observations:")
-    print(f"1. {first_feature} shows the strongest positive correlation with the number of rings (age).")
-    print(f"   This suggests that as {first_feature.lower()} increases, the age of the abalone tends to increase.")
-    print(f"2. {second_feature} shows the second strongest correlation with the number of rings (age).")
-    print(f"   This indicates that {second_feature.lower()} is also closely related to the age of the abalone.")
+    # print("\nMajor Observations:")
+    # print(f"1. {first_feature} shows the strongest positive correlation with the number of rings (age).")
+    # print(f"   This suggests that as {first_feature.lower()} increases, the age of the abalone tends to increase.")
+    # print(f"2. {second_feature} shows the second strongest correlation with the number of rings (age).")
+    # print(f"   This indicates that {second_feature.lower()} is also closely related to the age of the abalone.")
 
     return first_feature, second_feature
 
@@ -231,80 +250,79 @@ def analyze_and_plot_correlations(data, corr_matrix):
 @question_decorator(1, 4)
 def create_and_analyze_histograms(data, first_feature, second_feature):
     """
-    创建并分析数据集中最相关的两个特征和环数（年龄）的直方图。
+    Create and analyze histograms for the two most correlated features and ring-age.
 
-    此函数执行以下操作：
-    1. 为两个最相关的特征和环数（年龄）创建直方图
-    2. 保存直方图
-    3. 计算并打印基本统计信息
-    4. 分析并打印主要观察结果
+    This function performs the following operations:
+    1. Creates histograms for the two most correlated features and ring-age
+    2. Saves the histograms as an image file
+    3. Calculates and prints basic statistical information
+    4. Analyzes and prints key observations
 
-    :param data: pandas DataFrame，包含原始数据
-    :param first_feature: str，与环数最相关的特征名
-    :param second_feature: str，与环数第二相关的特征名
+    Args:
+    data (pandas.DataFrame): The input data for analysis
+    first_feature (str): Name of the feature most correlated with ring-age
+    second_feature (str): Name of the second most correlated feature with ring-age
     """
     print("Creating histograms for the two most correlated features and ring-age.")
 
-    # 创建一个包含三个子图的图形
+    # Create a figure with six subplots (3 original, 3 sqrt-transformed)
     fig, axs = plt.subplots(2, 3, figsize=(20, 12))
 
-    # 第一个最相关特征的直方图
+    # Create histogram for the first most correlated feature
     sns.histplot(data=data, x=first_feature, bins=30, kde=True, ax=axs[0, 0], edgecolor='black')
     axs[0, 0].set_title(f'Histogram of {first_feature}')
     axs[0, 0].set_xlabel(first_feature)
     axs[0, 0].set_ylabel('Count')
 
-    # 第二个最相关特征的直方图
+    # Create histogram for the second most correlated feature
     sns.histplot(data=data, x=second_feature, bins=30, kde=True, ax=axs[0, 1], edgecolor='black')
     axs[0, 1].set_title(f'Histogram of {second_feature}')
     axs[0, 1].set_xlabel(second_feature)
     axs[0, 1].set_ylabel('Count')
 
-    # 环数（年龄）的直方图
+    # Create histogram for ring-age
     sns.histplot(data=data, x='Rings', bins=30, kde=True, ax=axs[0, 2], edgecolor='black')
     axs[0, 2].set_title('Histogram of Ring-Age')
     axs[0, 2].set_xlabel('Rings')
     axs[0, 2].set_ylabel('Count')
 
-    # 第一个最相关特征的直方图，平方根变换后
+    # Create sqrt-transformed histograms
     sns.histplot(data=data, x=np.sqrt(data[first_feature]), bins=30, kde=True, ax=axs[1, 0], edgecolor='black')
     axs[1, 0].set_title(f'Sqrt Transformed Histogram of {first_feature}')
     axs[1, 0].set_xlabel(f'Sqrt of {first_feature}')
     axs[1, 0].set_ylabel('Count')
 
-    # 第二个最相关特征的直方图，平方根变换后
     sns.histplot(data=data, x=np.sqrt(data[second_feature]), bins=30, kde=True, ax=axs[1, 1], edgecolor='black')
     axs[1, 1].set_title(f'Sqrt Transformed Histogram of {second_feature}')
     axs[1, 1].set_xlabel(f'Sqrt of {second_feature}')
     axs[1, 1].set_ylabel('Count')
 
-    # 环数（年龄）的直方图，平方根变换后
     sns.histplot(data=data, x=np.sqrt(data['Rings']), bins=30, kde=True, ax=axs[1, 2], edgecolor='black')
     axs[1, 2].set_title('Sqrt Transformed Histogram of Ring-Age')
     axs[1, 2].set_xlabel('Sqrt of Rings')
     axs[1, 2].set_ylabel('Count')
 
-    # 调整布局并保存图形
+    # Adjust layout and save the figure
     plt.tight_layout()
     plt.savefig('images/feature_histograms_and_standardized.png')
     plt.close()
 
     print("Histograms saved as 'images/feature_histograms_and_standardized.png'")
 
-    # 计算基本统计信息
+    # Calculate basic statistics
     stats = {
         first_feature: data[first_feature].describe(),
         second_feature: data[second_feature].describe(),
         'Rings': data['Rings'].describe()
     }
 
-    # 打印基本统计信息
+    # Print basic statistics
     print("\nBasic statistics:")
     for feature, stat in stats.items():
         print(f"\n{feature}:")
         print(stat)
 
-    # 打印主要观察结果
+    # Print key observations
     print("\nMajor Observations:")
     print(f"1. Distribution of {first_feature}:")
     print(f"   - Range: {stats[first_feature]['min']:.2f} to {stats[first_feature]['max']:.2f}")
@@ -325,45 +343,46 @@ def create_and_analyze_histograms(data, first_feature, second_feature):
 @question_decorator(1, 5)
 def create_train_test_split(data, experiment_number):
     """
-    创建训练集和测试集，并进行数据分割验证。
+    Create training and test datasets and validate the data split.
 
-    此函数执行以下操作：
-    1. 使用给定的实验编号作为随机种子，创建60/40的训练/测试集分割
-    2. 打印分割后的数据集形状
-    3. 将训练集和测试集保存为CSV文件
-    4. 验证分割比例
-    5. 检查潜在的数据泄露
+    This function performs the following operations:
+    1. Uses the given experiment number as a random seed to create a 60/40 train/test split
+    2. Prints the shapes of the resulting datasets
+    3. Saves the training and test sets as CSV files
+    4. Validates the split ratio
+    5. Checks for potential data leakage
 
-    :param data: pandas DataFrame，包含要分割的原始数据
-    :param experiment_number: int，实验编号，用作随机种子
-    :return: tuple，包含训练集和测试集的DataFrame
+    Args:
+    data (pandas.DataFrame): The input data to be split
+    experiment_number (int): The experiment number, used as the random seed
+
+    Returns:
+    tuple: Contains the training and test DataFrames
     """
-    # 设置随机种子
+    # Set the random seed
     random_seed = experiment_number
-    # random_seed = 1
-    # random_seed += experiment_number + random.randint(1, 3)
-    print(f"Creating 60/40 train/test split by using randon seed: {random_seed}")
+    print(f"Creating 60/40 train/test split by using random seed: {random_seed}")
 
-    # 创建训练/测试集分割
+    # Create the train/test split
     train_data, test_data = train_test_split(data, test_size=0.4, random_state=random_seed)
 
-    # 打印分割后的数据集形状
+    # Print the shapes of the resulting datasets
     print(f"Train set shape: {train_data.shape}")
     print(f"Test set shape: {test_data.shape}")
 
-    # 保存训练集和测试集
+    # Save the training and test sets
     train_data.to_csv(f'data/train_data_exp_{random_seed}.csv', index=False)
     test_data.to_csv(f'data/test_data_exp_{random_seed}.csv', index=False)
 
     print(f"Train data saved as 'data/train_data_exp_{random_seed}.csv'")
     print(f"Test data saved as 'data/test_data_exp_{random_seed}.csv'")
 
-    # 验证分割比例
+    # Validate the split ratio
     print("\nVerifying the split:")
     print(f"Percentage of data in train set: {len(train_data) / len(data) * 100:.2f}%")
     print(f"Percentage of data in test set: {len(test_data) / len(data) * 100:.2f}%")
 
-    # 检查潜在的数据泄露
+    # Check for potential data leakage
     print("\nChecking for potential data leakage:")
     train_indices = set(train_data.index)
     test_indices = set(test_data.index)
@@ -379,34 +398,37 @@ def create_train_test_split(data, experiment_number):
 @question_decorator(2, 1)
 def linear_regression(train_data, test_data):
     """
-    执行线性回归分析并评估模型性能。
+    Perform linear regression analysis and evaluate model performance.
 
-    此函数执行以下操作：
-    1. 准备训练和测试数据
-    2. 训练线性回归模型
-    3. 进行预测
-    4. 计算并打印评估指标
-    5. 可视化实际值与预测值的关系
-    6. 分析特征重要性
+    This function performs the following operations:
+    1. Prepares the training and test data
+    2. Trains a linear regression model
+    3. Makes predictions
+    4. Calculates and prints evaluation metrics
+    5. Visualizes the relationship between actual and predicted values
+    6. Analyzes feature importance
 
-    :param train_data: pandas DataFrame，包含训练数据
-    :param test_data: pandas DataFrame，包含测试数据
-    :return: tuple，包含训练好的模型和特征重要性DataFrame
+    Args:
+    train_data (pandas.DataFrame): The training dataset
+    test_data (pandas.DataFrame): The test dataset
+
+    Returns:
+    tuple: Contains the trained model and a DataFrame of feature importances
     """
-    # 分离特征和目标变量
+    # Separate features and target variable
     X_train = train_data.drop('Rings', axis=1)
     y_train = train_data['Rings']
     X_test = test_data.drop('Rings', axis=1)
     y_test = test_data['Rings']
 
-    # 线性回归
+    # Train linear regression model
     model_lr = LinearRegression()
     model_lr.fit(X_train, y_train)
 
-    # 进行预测
+    # Make predictions
     y_test_pred = model_lr.predict(X_test)
 
-    # 调用参数，来做分析
+    # Extract model parameters for analysis
     coefficients_lr = model_lr.coef_
     intercept_lr = model_lr.intercept_
 
@@ -414,37 +436,36 @@ def linear_regression(train_data, test_data):
     print("Feature Coefficients under Linear Regression:")
     max_feature_length = max(len(feature) for feature in X_train.columns)
     for feature, coef in zip(X_train.columns, coefficients_lr):
-        print(f'Value of {feature:<{max_feature_length}} : {coef:.4f}')
+        print(f'{feature:<{max_feature_length}} : {coef:.4f}')
     print(f'Intercept: {intercept_lr:.4f}\n')
 
-    # 将预测结果四舍五入到最接近的整数，用于分类指标
+    # Round predictions to nearest integer for classification metrics
     y_test_pred_rounded = np.round(y_test_pred).astype(int)
 
-    # 计算评估指标
+    # Calculate evaluation metrics
     test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))
     test_r2 = r2_score(y_test, y_test_pred)
     test_accuracy = accuracy_score(y_test, y_test_pred_rounded)
 
-    # 打印评估指标
+    # Print evaluation metrics
     print(f"Test RMSE: {test_rmse:.4f}")
     print(f"Test R-squared: {test_r2:.4f}")
     print(f"Test Accuracy: {test_accuracy:.4f}\n")
 
-    # 逻辑回归
-    # 将年龄环数转换为二分类问题（例如，大于中位数为1，否则为0）
-    # median_rings = y_train.median()
+    # Logistic Regression
+    # Convert ring age to binary classification problem (e.g., 1 if greater than median, else 0)
     median_rings = 7
     y_train_binary = (y_train > median_rings).astype(int)
     y_test_binary = (y_test > median_rings).astype(int)
 
-    # 训练逻辑回归模型
+    # Train logistic regression model
     model_logistic = LogisticRegression()
     model_logistic.fit(X_train, y_train_binary)
 
-    # 预测概率
+    # Predict probabilities
     y_test_prob = model_logistic.predict_proba(X_test)[:, 1]
 
-    # 调用参数，来做分析
+    # Extract model parameters for analysis
     coefficients_logistic = model_logistic.coef_
     intercept_logistic = model_logistic.intercept_[0]
 
@@ -452,25 +473,25 @@ def linear_regression(train_data, test_data):
     print("Feature Coefficients under Logistic Regression:")
     max_feature_length = max(len(feature) for feature in X_train.columns)
     for feature, coef in zip(X_train.columns, coefficients_logistic):
-        print(f'Value of {feature:<{max_feature_length}} : {coef:.4f}')
+        print(f'{feature:<{max_feature_length}} : {coef:.4f}')
     print(f'Intercept: {intercept_logistic:.4f}\n')
 
-    # 计算ROC曲线和AUC
+    # Calculate ROC curve and AUC
     fpr, tpr, _ = roc_curve(y_test_binary, y_test_prob)
     roc_auc = auc(fpr, tpr)
 
-    # 将概率转换为二元预测
+    # Convert probabilities to binary predictions
     y_test_pred_logistic = (y_test_prob >= 0.5).astype(int)
     accuracy = accuracy_score(y_test_binary, y_test_pred_logistic)
 
     print(f"Logistic Regression AUC: {roc_auc:.4f}")
     print(f"Logistic Regression Accuracy: {accuracy:.4f}")
 
-    # 创建图形和网格布局
+    # Create figure and grid layout
     fig = plt.figure(figsize=(24, 16))
     gs = gridspec.GridSpec(2, 4)
 
-    # 左上子图：实际值vs预测值散点图
+    # Top-left subplot: Actual vs Predicted scatter plot
     ax1 = fig.add_subplot(gs[0, :3])
     ax1.scatter(y_test, y_test_pred)
     ax1.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
@@ -478,12 +499,12 @@ def linear_regression(train_data, test_data):
     ax1.set_ylabel("Predicted Ring Age")
     ax1.set_title("Actual vs Predicted Ring Age")
 
-    # 添加Intercept值到左上图
+    # Add Intercept value to top-left plot
     ax1.text(0.05, 0.95, f'Intercept: {intercept_lr:.4f}', transform=ax1.transAxes,
              verticalalignment='top', fontsize=10,
              bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
 
-    # 右上子图：特征重要性横向柱状图
+    # Top-right subplot: Feature importance horizontal bar plot
     ax2 = fig.add_subplot(gs[0, 3])
     feature_importance = pd.DataFrame({'feature': X_train.columns, 'importance': coefficients_lr})
     feature_importance = feature_importance.sort_values('importance', ascending=False)
@@ -491,20 +512,20 @@ def linear_regression(train_data, test_data):
     ax2.set_xlabel("Coefficient Value")
     ax2.set_title("Feature Importance")
 
-    # 调整右上子图的字体大小和布局
+    # Adjust top-right subplot font sizes and layout
     ax2.tick_params(axis='y', labelsize=8)
     ax2.tick_params(axis='x', labelsize=8)
     ax2.title.set_fontsize(10)
     ax2.xaxis.label.set_fontsize(8)
 
-    # 添加数字图例到柱状图
+    # Add numeric labels to bar plot
     for i, bar in enumerate(bars):
         width = bar.get_width()
         ax2.text(width, bar.get_y() + bar.get_height() / 2,
                  f'{width:.4f}',
                  ha='left', va='center', fontsize=7)
 
-    # 左下子图：ROC曲线
+    # Bottom-left subplot: ROC curve
     ax3 = fig.add_subplot(gs[1, 0:3])
     ax3.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.4f})')
     ax3.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
@@ -515,12 +536,12 @@ def linear_regression(train_data, test_data):
     ax3.set_title('Receiver Operating Characteristic (ROC) Curve')
     ax3.legend(loc="lower right")
 
-    # 添加Intercept值到左上图
+    # Add Intercept value to bottom-left plot
     ax3.text(0.05, 0.95, f'Intercept: {intercept_logistic:.4f}', transform=ax3.transAxes,
              verticalalignment='top', fontsize=10,
              bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
 
-    # 右上子图：特征重要性横向柱状图
+    # Bottom-right subplot: Feature importance horizontal bar plot for logistic regression
     ax4 = fig.add_subplot(gs[1, 3])
     feature_importance = pd.DataFrame({'feature': X_train.columns, 'importance': coefficients_logistic})
     feature_importance = feature_importance.sort_values('importance', ascending=False)
@@ -528,20 +549,20 @@ def linear_regression(train_data, test_data):
     ax4.set_xlabel("Coefficient Value")
     ax4.set_title("Feature Importance")
 
-    # 调整右上子图的字体大小和布局
+    # Adjust bottom-right subplot font sizes and layout
     ax4.tick_params(axis='y', labelsize=8)
     ax4.tick_params(axis='x', labelsize=8)
     ax4.title.set_fontsize(10)
     ax4.xaxis.label.set_fontsize(8)
 
-    # 添加数字图例到柱状图
+    # Add numeric labels to bar plot
     for i, bar in enumerate(bars):
         width = bar.get_width()
         ax4.text(width, bar.get_y() + bar.get_height() / 2,
                  f'{width:.4f}',
                  ha='left', va='center', fontsize=7)
 
-    # 调整布局并保存图形
+    # Adjust layout and save figure
     plt.tight_layout()
     plt.savefig('images/regression_and_classification_analysis.png', dpi=300, bbox_inches='tight')
     plt.close()
@@ -550,47 +571,50 @@ def linear_regression(train_data, test_data):
 @question_decorator(2, 2)
 def compare_regression_models(train_data, test_data):
     """
-    比较线性回归和逻辑回归模型性能（有无数据标准化）。
+    Compare the performance of linear regression and logistic regression models with and without data normalization.
 
-    此函数执行以下操作：
-    1. 准备训练和测试数据
-    2. 对数据进行标准化处理
-    3. 训练线性回归和逻辑回归模型（有标准化和无标准化两种情况）
-    4. 进行预测并计算评估指标，包括AUC
-    5. 可视化比较结果
+    This function performs the following operations:
+    1. Prepares the training and test data
+    2. Applies data normalization
+    3. Trains linear regression and logistic regression models (with and without normalization)
+    4. Makes predictions and calculates evaluation metrics, including AUC
+    5. Visualizes the comparison results
 
-    :param train_data: pandas DataFrame，包含训练数据
-    :param test_data: pandas DataFrame，包含测试数据
-    :return: pandas DataFrame，包含比较结果
+    Args:
+    train_data (pandas.DataFrame): The training dataset
+    test_data (pandas.DataFrame): The test dataset
+
+    Returns:
+    pandas.DataFrame: Contains the comparison results
     """
-    # 分离特征和目标变量
+    # Separate features and target variable
     X_train = train_data.drop('Rings', axis=1)
     y_train = train_data['Rings']
     X_test = test_data.drop('Rings', axis=1)
     y_test = test_data['Rings']
 
-    # 将年龄环数转换为二分类问题（例如，大于中位数为1，否则为0）
+    # Convert ring age to binary classification problem (e.g., 1 if greater than median, else 0)
     median_rings = 7
     y_train_binary = (y_train > median_rings).astype(int)
     y_test_binary = (y_test > median_rings).astype(int)
 
-    # 计算类别权重
+    # Calculate class weights
     class_weights = compute_class_weight(class_weight='balanced', classes=np.array([0, 1]), y=y_train_binary)
     class_weight_dict = {0: class_weights[0], 1: class_weights[1]}
 
-    # 初始化模型
+    # Initialize models
     linear_model = LinearRegression()
     logistic_model = LogisticRegression(max_iter=1000, class_weight=class_weight_dict)
 
-    # 初始化标准化器
+    # Initialize normalizer
     scaler = MinMaxScaler()
 
-    # 用于存储结果的列表
+    # Lists to store results
     normalizations = ['Without Normalization', 'With Normalization']
     models = ['Linear Regression', 'Logistic Regression']
     results = []
 
-    # 对有无标准化的数据分别进行建模和评估
+    # Perform modeling and evaluation for data with and without normalization
     for norm in normalizations:
         if norm == 'With Normalization':
             X_train_scaled = scaler.fit_transform(X_train)
@@ -609,10 +633,10 @@ def compare_regression_models(train_data, test_data):
                 y_train_target = y_train_binary
                 y_test_target = y_test_binary
 
-            # 训练模型
+            # Train the model
             model.fit(X_train_scaled, y_train_target)
 
-            # 进行预测
+            # Make predictions
             if model_name == 'Linear Regression':
                 y_test_pred = model.predict(X_test_scaled)
                 test_auc = np.nan
@@ -627,7 +651,7 @@ def compare_regression_models(train_data, test_data):
                 test_r2 = np.nan
                 test_accuracy = accuracy_score(y_test_target, np.round(y_test_pred))
 
-            # 存储结果
+            # Store results
             results.append({
                 'Model': model_name,
                 'Normalization': norm,
@@ -637,13 +661,13 @@ def compare_regression_models(train_data, test_data):
                 'Test AUC': test_auc
             })
 
-    # 将结果转换为DataFrame以便查看
+    # Convert results to DataFrame for easy viewing
     results_df = pd.DataFrame(results)
 
-    # 打印结果
+    # Print results
     print(results_df.to_string(index=False))
 
-    # 可视化结果
+    # Visualize results
     metrics = ['RMSE', 'R-squared', 'Accuracy', 'AUC']
     fig, axs = plt.subplots(1, 4, figsize=(25, 6))
     fig.suptitle('Comparison of Model Performance with and without Normalization')
@@ -661,7 +685,7 @@ def compare_regression_models(train_data, test_data):
         axs[i].set_title(f'{metric} Comparison')
         axs[i].set_xticks(x)
         axs[i].set_xticklabels(normalizations)
-        if i == 0:  # 只在第一个子图上显示图例
+        if i == 0:  # Only show legend on the first subplot
             axs[i].legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
     plt.tight_layout()
@@ -670,47 +694,50 @@ def compare_regression_models(train_data, test_data):
 
     return results_df
 
-
 @question_decorator(2, 3)
 def combined_regression_analysis(train_data, test_data, first_feature, second_feature):
     """
-    执行线性回归和逻辑回归分析，并比较结果。
+    Perform linear and logistic regression analysis and compare results.
 
-    :param train_data: pandas DataFrame，包含训练数据
-    :param test_data: pandas DataFrame，包含测试数据
-    :param first_feature: str，第一个选定的特征名
-    :param second_feature: str，第二个选定的特征名
-    :return: dict，包含两个模型和它们的评估指标
+    This function performs the following operations:
+    1. Prepares the data using the two most correlated features
+    2. Trains and evaluates both linear and logistic regression models
+    3. Calculates and prints various performance metrics
+    4. Visualizes the results using scatter plots and confusion matrices
+
+    Args:
+    train_data (pandas.DataFrame): The training dataset
+    test_data (pandas.DataFrame): The test dataset
+    first_feature (str): Name of the feature most correlated with ring-age
+    second_feature (str): Name of the second most correlated feature with ring-age
+
+    Returns:
+    dict: Contains the two models and their evaluation metrics
     """
-    # 选择特征
+    # Select features
     features = [first_feature, second_feature]
 
-    # 分离特征和目标变量
+    # Separate features and target variable
     X_train = train_data[features]
     y_train = train_data['Rings']
     X_test = test_data[features]
     y_test = test_data['Rings']
 
-    # # 标准化特征
-    # scaler = MinMaxScaler()
-    # X_train_scaled = scaler.fit_transform(X_train)
-    # X_test_scaled = scaler.transform(X_test)
-
-    # 不执行标准化
+    # Use raw features without normalization
     X_train_scaled = X_train
     X_test_scaled = X_test
 
-    # 线性回归
+    # Linear regression
     linear_model = LinearRegression()
     linear_model.fit(X_train_scaled, y_train)
     linear_test_pred = linear_model.predict(X_test_scaled)
 
-    # 逻辑回归（将连续的Rings转换为二分类问题）
+    # Logistic regression (convert continuous Rings to binary problem)
     median_rings = 7
     y_train_binary = (y_train > median_rings).astype(int)
     y_test_binary = (y_test > median_rings).astype(int)
 
-    # 计算类别权重
+    # Calculate class weights
     class_weights = compute_class_weight(class_weight='balanced', classes=np.array([0, 1]), y=y_train_binary)
     class_weight_dict = {0: class_weights[0], 1: class_weights[1]}
 
@@ -719,7 +746,7 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
     logistic_test_pred_proba = logistic_model.predict_proba(X_test_scaled)[:, 1]
     logistic_test_pred = logistic_model.predict(X_test_scaled)
 
-    # 计算评估指标
+    # Calculate evaluation metrics
     results = {
         'linear': {
             'model': linear_model,
@@ -734,7 +761,7 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
         }
     }
 
-    # 打印结果比较
+    # Print comparison results
     print("Regression Analysis Results:")
     print(f"Selected features: {features}")
     print("\nLinear Regression:")
@@ -751,17 +778,17 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
     print("\nClassification Report (Logistic Regression):")
     print(classification_report(y_test_binary, logistic_test_pred))
 
-    # 可视化比较
+    # Visualize comparison
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
 
-    # 线性回归散点图
+    # Linear regression scatter plot
     ax1.scatter(y_test, linear_test_pred, alpha=0.5)
     ax1.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
     ax1.set_xlabel("Actual Ring Age")
     ax1.set_ylabel("Predicted Ring Age")
     ax1.set_title("Linear Regression: Actual vs Predicted")
 
-    # 逻辑回归混淆矩阵
+    # Logistic regression confusion matrix
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax2)
     ax2.set_xlabel('Predicted')
     ax2.set_ylabel('Actual')
@@ -773,16 +800,25 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
 
     return results
 
-
 @question_decorator(2, 4)
 def neural_network_regression(train_data, test_data):
     """
     Perform regression analysis using a neural network and optimize hyperparameters through grid search.
     Explicitly output the optimization process.
 
-    :param train_data: pandas DataFrame containing training data
-    :param test_data: pandas DataFrame containing test data
-    :return: tuple containing the best model and various evaluation metrics
+    This function performs the following operations:
+    1. Prepares and normalizes the data
+    2. Defines a parameter grid for hyperparameter optimization
+    3. Performs grid search with cross-validation
+    4. Trains the best model and evaluates its performance
+    5. Visualizes the actual vs predicted values
+
+    Args:
+    train_data (pandas.DataFrame): The training dataset
+    test_data (pandas.DataFrame): The test dataset
+
+    Returns:
+    tuple: Contains the best model and various evaluation metrics
     """
     # Separate features and target variable
     X_train = train_data.drop('Rings', axis=1)
@@ -863,30 +899,31 @@ def neural_network_regression(train_data, test_data):
 
     return best_model, test_rmse, test_r2
 
-
 @question_decorator(2, 5)
 def compare_models():
     pass
 
-
 if __name__ == "__main__":
-    # P1Q1
+    # Part 1: Data Processing
+    # Q1: Clean and preprocess the data
     cleaned_data = get_and_clean_data()
-    # P1Q2
+    # Q2: Create and analyze correlation heatmap
     corr_matrix = plot_correlation_hot(cleaned_data)
-    # P1Q3
+    # Q3: Analyze and plot correlations for the most correlated features
     first_feature, second_feature = analyze_and_plot_correlations(cleaned_data, corr_matrix)
-    # P1Q4
+    # Q4: Create and analyze histograms for key features
     create_and_analyze_histograms(cleaned_data, first_feature, second_feature)
-    # P1Q5
+    # Q5: Create train-test split
     train_data, test_data = create_train_test_split(cleaned_data, experiment_number=42)
-    # P2Q1
+
+    # Part 2: Modeling
+    # Q1: Perform linear regression analysis
     linear_regression(train_data, test_data)
-    # P2Q2
+    # Q2: Compare regression models with and without normalization
     results_df = compare_regression_models(train_data, test_data)
-    # P2Q3
+    # Q3: Perform combined regression analysis on selected features
     results = combined_regression_analysis(train_data, test_data, first_feature, second_feature)
-    # P2Q4
+    # Q4: Perform neural network regression with hyperparameter optimization
     nn_model, nn_test_rmse, nn_test_r2 = neural_network_regression(train_data, test_data)
-    # P2Q5
+    # Q5: Compare all models (to be implemented)
     compare_models()
