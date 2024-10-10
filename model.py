@@ -116,7 +116,7 @@ def get_and_clean_data():
     data_format = pd.read_csv(DATA_FILE, names=column_names)
 
     # Define a mapping of sex categories to numeric values
-    gender_map = {'M': -1, 'F': 1, 'I': 0}
+    gender_map = {'M': 1, 'F': 1, 'I': 0}
 
     # Map the 'Sex' column values to numeric values
     data_format['Sex'] = data_format['Sex'].map(gender_map)
@@ -162,7 +162,7 @@ def plot_correlation_hot(data):
     plt.figure(figsize=(12, 10))
 
     # Create a heatmap of the correlation matrix
-    plt.imshow(corr_mat, interpolation='nearest', cmap='viridis')
+    plt.imshow(corr_mat, interpolation='nearest', cmap='coolwarm')
     plt.colorbar()  # Add a color bar to the plot
     plt.title("Correlation Matrix")
 
@@ -174,7 +174,7 @@ def plot_correlation_hot(data):
     for i in range(len(data.columns)):
         for j in range(len(data.columns)):
             value = corr_mat.iloc[i, j]
-            color = "white" if value < 0.3 else "black"
+            color = "white" if value > 0.99 else "black"
             plt.text(j, i, f'{value:.3f}',
                      ha="center", va="center", color=color,
                      fontweight='bold')
@@ -711,7 +711,7 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
     1. Prepares the data using the two most correlated features
     2. Trains and evaluates both linear and logistic regression models
     3. Calculates and prints various performance metrics
-    4. Visualizes the results using scatter plots and confusion matrices
+    4. cansVisualizes the results using scatter plots and confusion matrices
 
     Args:
     train_data (pandas.DataFrame): The training dataset
@@ -842,7 +842,6 @@ def neural_network_regression(train_data, test_data):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # Define parameter range for grid search
     param_grid = {
         'hidden_layer_sizes': [
             (50,), (100,),
@@ -851,9 +850,10 @@ def neural_network_regression(train_data, test_data):
             (50, 50), (25, 25),
             (50, 25, 10), (10, 25, 50)
         ],
+        'solver': ['sgd'],
+        'learning_rate': ['adaptive'],
         'learning_rate_init': [0.1, 0.01, 0.001],
         'max_iter': [10000],
-        'solver': ['sgd']
     }
 
     # Initialize MLPRegressor
