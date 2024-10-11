@@ -492,7 +492,8 @@ def linear_regression(train_data, test_data):
 
     # Create figure and grid layout
     fig = plt.figure(figsize=(24, 16))
-    gs = gridspec.GridSpec(2, 4)
+    gs = gridspec.GridSpec(2, 4, wspace=0.3)  # Increase wspace to create more space between columns
+
 
     # Top-left subplot: Actual vs Predicted scatter plot
     ax1 = fig.add_subplot(gs[0, :3])
@@ -504,8 +505,8 @@ def linear_regression(train_data, test_data):
 
     # Add Intercept value to top-left plot
     ax1.text(0.05, 0.95, f'Intercept: {intercept_lr:.4f}', transform=ax1.transAxes,
-             verticalalignment='top', fontsize=10,
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+            verticalalignment='top', fontsize=10,
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
 
     # Top-right subplot: Feature importance horizontal bar plot
     ax2 = fig.add_subplot(gs[0, 3])
@@ -524,9 +525,10 @@ def linear_regression(train_data, test_data):
     # Add numeric labels to bar plot
     for i, bar in enumerate(bars):
         width = bar.get_width()
-        ax2.text(width, bar.get_y() + bar.get_height() / 2,
-                 f'{width:.4f}',
-                 ha='left', va='center', fontsize=7)
+        label_position = width + 0.02 * width  # Move the label slightly to the right
+        ax2.text(label_position, bar.get_y() + bar.get_height() / 2,
+                f'{width:.4f}',
+                ha='left', va='center', fontsize=7)
 
     # Bottom-left subplot: ROC curve
     ax3 = fig.add_subplot(gs[1, 0:3])
@@ -541,8 +543,8 @@ def linear_regression(train_data, test_data):
 
     # Add Intercept value to bottom-left plot
     ax3.text(0.05, 0.95, f'Intercept: {intercept_logistic:.4f}', transform=ax3.transAxes,
-             verticalalignment='top', fontsize=10,
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+            verticalalignment='top', fontsize=10,
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
 
     # Bottom-right subplot: Feature importance horizontal bar plot for logistic regression
     ax4 = fig.add_subplot(gs[1, 3])
@@ -561,9 +563,10 @@ def linear_regression(train_data, test_data):
     # Add numeric labels to bar plot
     for i, bar in enumerate(bars):
         width = bar.get_width()
-        ax4.text(width, bar.get_y() + bar.get_height() / 2,
-                 f'{width:.4f}',
-                 ha='left', va='center', fontsize=7)
+        label_position = width + 0.02 * width  # Move the label slightly to the right
+        ax4.text(label_position, bar.get_y() + bar.get_height() / 2,
+                f'{width:.4f}',
+                ha='left', va='center', fontsize=7)
 
     # Adjust layout and save figure
     plt.savefig('images/regression_and_classification_analysis.png', dpi=150, bbox_inches='tight')
@@ -592,6 +595,15 @@ def compare_regression_models(train_data, test_data):
     Returns:
     pandas.DataFrame: Contains the comparison results
     """
+    import pandas as pd
+    import numpy as np
+    from sklearn.linear_model import LinearRegression, LogisticRegression
+    from sklearn.preprocessing import MinMaxScaler
+    from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, roc_auc_score, confusion_matrix, classification_report
+    from sklearn.utils.class_weight import compute_class_weight
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
     # Separate features and target variable
     X_train = train_data.drop('Rings', axis=1)
     y_train = train_data['Rings']
@@ -630,11 +642,11 @@ def compare_regression_models(train_data, test_data):
 
         for model_name in models:
             if model_name == 'Linear Regression':
-                model = linear_model
+                model = LinearRegression()
                 y_train_target = y_train
                 y_test_target = y_test
             else:
-                model = logistic_model
+                model = LogisticRegression(max_iter=1000, class_weight=class_weight_dict)
                 y_train_target = y_train_binary
                 y_test_target = y_test_binary
 
@@ -654,7 +666,7 @@ def compare_regression_models(train_data, test_data):
                 test_auc = roc_auc_score(y_test_target, y_test_pred_proba)
                 test_rmse = np.nan
                 test_r2 = np.nan
-                test_accuracy = accuracy_score(y_test_target, np.round(y_test_pred))
+                test_accuracy = accuracy_score(y_test_target, y_test_pred)
 
             # Store results
             results.append({
@@ -672,34 +684,45 @@ def compare_regression_models(train_data, test_data):
     # Print results
     print(results_df.to_string(index=False))
 
-    # Visualize results
+   # Visualize results
     metrics = ['RMSE', 'R-squared', 'Accuracy', 'AUC']
     fig, axs = plt.subplots(1, 4, figsize=(25, 6))
-    fig.suptitle('Comparison of Model Performance with and without Normalization')
+    fig.suptitle('Comparison of Model Performance with and without Normalization', fontsize=16)
 
     x = np.arange(len(normalizations))
-    width = 0.2
+    width = 0.35  # Adjusted width for better spacing
 
     for i, metric in enumerate(metrics):
         for j, model in enumerate(models):
             model_results = results_df[results_df['Model'] == model]
-            axs[i].bar(x + (j - 0.5) * width, model_results[f'Test {metric}'], width, label=model, alpha=0.7)
+            bar_values = model_results[f'Test {metric}']
+            axs[i].bar(x + (j - 0.5) * width, bar_values, width, label=model, alpha=0.7)
 
-        axs[i].set_xlabel('Normalization')
-        axs[i].set_ylabel(metric)
-        axs[i].set_title(f'{metric} Comparison')
+            # Add value labels on top of each bar
+            for idx, value in enumerate(bar_values):
+                if not np.isnan(value):
+                    axs[i].text(
+                        x[idx] + (j - 0.5) * width,  # X position
+                        value + (0.01 * max(bar_values)),  # Y position slightly above the bar
+                        f'{value:.4f}' if not np.isnan(value) else 'N/A',  # Text
+                        ha='center', va='bottom', fontsize=10  # Alignment and font size
+                    )
+
+        axs[i].set_ylabel(metric, fontsize=12)
+        axs[i].set_title(f'{metric} Comparison', fontsize=14)
         axs[i].set_xticks(x)
-        axs[i].set_xticklabels(normalizations)
-        if i == 0:  # Only show legend on the first subplot
-            axs[i].legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        axs[i].set_xticklabels(normalizations, fontsize=12)
+        axs[i].tick_params(axis='y', labelsize=10)
 
-    plt.tight_layout()
+    # Adjust legend position above the subplots
+    handles, labels = axs[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=len(models), fontsize=12, bbox_to_anchor=(0.5, 1.1))
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust layout to ensure enough space for the legend above
     plt.savefig('images/model_comparison_with_auc.png', bbox_inches='tight')
     plt.close()
 
     print(f'\'images/model_comparison_with_auc.png\' has been saved.')
-
-    return results_df
 
 
 @question_decorator(2, 3)
@@ -760,7 +783,7 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
             'model': linear_model,
             'test_rmse': np.sqrt(mean_squared_error(y_test, linear_test_pred)),
             'test_r2': r2_score(y_test, linear_test_pred),
-            'test_accuracy': accuracy_score(y_test_binary, np.round(linear_test_pred > median_rings).astype(int))
+            'test_accuracy': accuracy_score(y_test, np.round(linear_test_pred))
         },
         'logistic': {
             'model': logistic_model,
@@ -775,7 +798,7 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
     print("\nLinear Regression:")
     print(f"Test RMSE: {results['linear']['test_rmse']:.4f}")
     print(f"Test R-squared: {results['linear']['test_r2']:.4f}")
-    print(f"Test Accuracy (binary): {results['linear']['test_accuracy']:.4f}")
+    print(f"Test Accuracy: {results['linear']['test_accuracy']:.4f}")
 
     print("\nLogistic Regression:")
     print(f"Test Accuracy: {results['logistic']['test_accuracy']:.4f}")
@@ -797,7 +820,7 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
     ax1.set_title("Linear Regression: Actual vs Predicted")
 
     # Logistic regression confusion matrix
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax2)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax2, annot_kws={"size": 20})
     ax2.set_xlabel('Predicted')
     ax2.set_ylabel('Actual')
     ax2.set_title('Logistic Regression: Confusion Matrix')
@@ -812,6 +835,113 @@ def combined_regression_analysis(train_data, test_data, first_feature, second_fe
 
 
 @question_decorator(2, 4)
+# def neural_network_regression(train_data, test_data):
+#     """
+#     Perform regression analysis using a neural network and optimize hyperparameters through grid search.
+#     Explicitly output the optimization process.
+
+#     This function performs the following operations:
+#     1. Prepares and normalizes the data
+#     2. Defines a parameter grid for hyperparameter optimization
+#     3. Performs grid search with cross-validation
+#     4. Trains the best model and evaluates its performance
+#     5. Visualizes the actual vs predicted values
+
+#     Args:
+#     train_data (pandas.DataFrame): The training dataset
+#     test_data (pandas.DataFrame): The test dataset
+
+#     Returns:
+#     tuple: Contains the best model and various evaluation metrics
+#     """
+#     # Separate features and target variable
+#     X_train = train_data.drop('Rings', axis=1)
+#     y_train = train_data['Rings']
+#     X_test = test_data.drop('Rings', axis=1)
+#     y_test = test_data['Rings']
+
+#     # Standardize input data
+#     scaler = MinMaxScaler()
+#     X_train_scaled = scaler.fit_transform(X_train)
+#     X_test_scaled = scaler.transform(X_test)
+
+#     param_grid = {
+#         'hidden_layer_sizes': [
+#             (50,), (100,),
+#             (50, 25), (25, 10),
+#             (25, 50), (10, 25),
+#             (50, 50), (25, 25),
+#             (50, 25, 10), (10, 25, 50)
+#         ],
+#         'solver': ['sgd'],
+#         'learning_rate': ['adaptive'],
+#         'learning_rate_init': [0.1, 0.01, 0.001],
+#         'max_iter': [10000],
+#     }
+
+#     # Initialize MLPRegressor
+#     mlp = MLPRegressor(random_state=42)
+
+#     # Perform grid search
+#     grid_search = GridSearchCV(mlp, param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1, verbose=1)
+
+#     print("Starting grid search...")
+#     grid_search.fit(X_train_scaled, y_train)
+
+#     # Explicitly output results for each parameter combination
+#     grid_results = pd.DataFrame(grid_search.cv_results_)
+#     for i, row in grid_results.iterrows():
+#         params = row['params']
+#         mean_score = -row['mean_test_score']  # Convert to positive MSE
+#         std_score = row['std_test_score']
+
+#         print(f"Parameter combination {i + 1}:")
+#         print(f"  Hidden layers: {params['hidden_layer_sizes']}")
+#         print(f"  Learning rate: {params['learning_rate_init']}")
+#         print(f"  Mean squared error: {mean_score:.4f} (+/- {std_score * 2:.4f})")
+#         print()
+
+#     print("Grid search completed.")
+#     # Get the best model
+#     best_model = grid_search.best_estimator_
+
+#     print("- "*20)
+#     print("Best parameter combination:")
+#     print(f"  Hidden layers: {grid_search.best_params_['hidden_layer_sizes']}")
+#     print(f"  Learning rate: {grid_search.best_params_['learning_rate_init']}")
+#     print(f"  Best mean squared error: {-grid_search.best_score_:.4f}")
+#     print()
+
+#     # Make predictions using the best model
+#     y_test_pred = best_model.predict(X_test_scaled)
+
+#     # Calculate evaluation metrics
+#     test_mse = mean_squared_error(y_test, y_test_pred)
+#     test_rmse = np.sqrt(test_mse)
+#     test_mae = mean_absolute_error(y_test, y_test_pred)
+#     test_r2 = r2_score(y_test, y_test_pred)
+
+#     # Print final results
+#     print("Neural Network Final Results:")
+#     print(f"Test MSE: {test_mse:.4f}")
+#     print(f"Test RMSE: {test_rmse:.4f}")
+#     print(f"Test MAE: {test_mae:.4f}")
+#     print(f"Test R-squared: {test_r2:.4f}")
+
+#     # Visualize prediction results
+#     plt.figure(figsize=(10, 6))
+#     plt.scatter(y_test, y_test_pred, alpha=0.5)
+#     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+#     plt.xlabel("Actual Age")
+#     plt.ylabel("Predicted Age")
+#     plt.title("Neural Network: Actual vs Predicted Age")
+#     plt.savefig('images/nn_actual_vs_predicted.png')
+#     plt.close()
+
+#     print('\'images/nn_actual_vs_predicted.png\' has been saved.')
+
+#     return best_model, test_rmse, test_r2
+
 def neural_network_regression(train_data, test_data):
     """
     Perform regression analysis using a neural network and optimize hyperparameters through grid search.
@@ -819,7 +949,7 @@ def neural_network_regression(train_data, test_data):
 
     This function performs the following operations:
     1. Prepares and normalizes the data
-    2. Defines a parameter grid for hyperparameter optimization
+    2. Defines a parameter grid for hyperparameter optimization, including activation functions
     3. Performs grid search with cross-validation
     4. Trains the best model and evaluates its performance
     5. Visualizes the actual vs predicted values
@@ -842,6 +972,7 @@ def neural_network_regression(train_data, test_data):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
+    # Define parameter range for grid search, including activation functions
     param_grid = {
         'hidden_layer_sizes': [
             (50,), (100,),
@@ -850,10 +981,9 @@ def neural_network_regression(train_data, test_data):
             (50, 50), (25, 25),
             (50, 25, 10), (10, 25, 50)
         ],
-        'solver': ['sgd'],
-        'learning_rate': ['adaptive'],
         'learning_rate_init': [0.1, 0.01, 0.001],
         'max_iter': [10000],
+        'solver': ['sgd'],
     }
 
     # Initialize MLPRegressor
@@ -882,7 +1012,7 @@ def neural_network_regression(train_data, test_data):
     # Get the best model
     best_model = grid_search.best_estimator_
 
-    print("- "*20)
+    print("- " * 20)
     print("Best parameter combination:")
     print(f"  Hidden layers: {grid_search.best_params_['hidden_layer_sizes']}")
     print(f"  Learning rate: {grid_search.best_params_['learning_rate_init']}")
@@ -898,12 +1028,17 @@ def neural_network_regression(train_data, test_data):
     test_mae = mean_absolute_error(y_test, y_test_pred)
     test_r2 = r2_score(y_test, y_test_pred)
 
+    # Calculate test accuracy (round predictions to nearest integer and compare)
+    y_test_pred_rounded = np.round(y_test_pred)
+    test_accuracy = np.mean(y_test_pred_rounded == y_test)
+
     # Print final results
     print("Neural Network Final Results:")
     print(f"Test MSE: {test_mse:.4f}")
     print(f"Test RMSE: {test_rmse:.4f}")
     print(f"Test MAE: {test_mae:.4f}")
     print(f"Test R-squared: {test_r2:.4f}")
+    print(f"Test Accuracy: {test_accuracy:.4f}")  # Print test accuracy
 
     # Visualize prediction results
     plt.figure(figsize=(10, 6))
@@ -917,7 +1052,7 @@ def neural_network_regression(train_data, test_data):
 
     print('\'images/nn_actual_vs_predicted.png\' has been saved.')
 
-    return best_model, test_rmse, test_r2
+    return best_model, test_rmse, test_r2, test_accuracy  # Return accuracy in the tuple
 
 
 @question_decorator(2, 5)
@@ -946,6 +1081,7 @@ if __name__ == "__main__":
     # Q3: Perform combined regression analysis on selected features
     results = combined_regression_analysis(train_data, test_data, first_feature, second_feature)
     # Q4: Perform neural network regression with hyperparameter optimization
-    nn_model, nn_test_rmse, nn_test_r2 = neural_network_regression(train_data, test_data)
+    # nn_model, nn_test_rmse, nn_test_r2 = neural_network_regression(train_data, test_data)
+    best_model, test_rmse, test_r2, test_accuracy = neural_network_regression(train_data, test_data)
     # Q5: Compare all models (to be implemented)
     compare_models()

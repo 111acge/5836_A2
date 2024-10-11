@@ -1,0 +1,349 @@
+Directory already exists: images
+========== Answer for Data processing Q1. ==========
+Shape before cleaning: (4177, 9)
+Length column error number:0
+Diameter column error number:0
+Height column error number:2
+Whole weight column error number:0
+Shucked weight column error number:0
+Viscera weight column error number:0
+Shell weight column error number:0
+Rings column error number:0
+Shape after cleaning: (4175, 9)
+Data has been cleaned and saved to data/cleaned_data.csv. 
+
+The top 5 data: 
+   Sex  Length  Diameter  ...  Viscera weight  Shell weight  Rings
+0    1   0.455     0.365  ...          0.1010         0.150     15
+1    1   0.350     0.265  ...          0.0485         0.070      7
+2    1   0.530     0.420  ...          0.1415         0.210      9
+3    1   0.440     0.365  ...          0.1140         0.155     10
+4    0   0.330     0.255  ...          0.0395         0.055      7
+
+[5 rows x 9 columns]
+========== End of Data processing Q1. ==========
+
+========== Answer for Data processing Q2. ==========
+Correlation hot map has been saved in images/correlation_hot.png.
+========== End of Data processing Q2. ==========
+
+========== Answer for Data processing Q3. ==========
+Correlation scatter map has been saved in images/correlation_scatter_plots.png.
+Top two correlated features with Rings:
+1. Shell weight: correlation of 0.628
+2. Diameter: correlation of 0.574
+========== End of Data processing Q3. ==========
+
+========== Answer for Data processing Q4. ==========
+Creating histograms for the two most correlated features and ring-age.
+Histograms saved as 'images/feature_histograms_and_standardized.png'
+
+Basic statistics:
+
+Shell weight:
+count    4175.000000
+mean        0.238834
+std         0.139212
+min         0.001500
+25%         0.130000
+50%         0.234000
+75%         0.328750
+max         1.005000
+Name: Shell weight, dtype: float64
+
+Diameter:
+count    4175.00000
+mean        0.40794
+std         0.09922
+min         0.05500
+25%         0.35000
+50%         0.42500
+75%         0.48000
+max         0.65000
+Name: Diameter, dtype: float64
+
+Rings:
+count    4175.000000
+mean        9.935090
+std         3.224227
+min         1.000000
+25%         8.000000
+50%         9.000000
+75%        11.000000
+max        29.000000
+Name: Rings, dtype: float64
+
+Major Observations:
+1. Distribution of Shell weight:
+   - Range: 0.00 to 1.00
+   - Mean: 0.24, Median: 0.23
+   - The distribution appears to be right-skewed (positively skewed).
+
+2. Distribution of Diameter:
+   - Range: 0.06 to 0.65
+   - Mean: 0.41, Median: 0.42
+   - The distribution appears to be slightly right-skewed, approximately normal.
+
+3. Distribution of Ring-Age:
+   - Range: 1 to 29
+   - Mean: 9.94, Median: 9
+   - The distribution appears to be heavily right-skewed, possibly approaching a log-normal distribution.
+========== End of Data processing Q4. ==========
+
+========== Answer for Data processing Q5. ==========
+Creating 60/40 train/test split by using random seed: 42
+Train set shape: (2505, 9)
+Test set shape: (1670, 9)
+Train data saved as 'data/train_data_exp_42.csv'
+Test data saved as 'data/test_data_exp_42.csv'
+
+Verifying the split:
+Percentage of data in train set: 60.00%
+Percentage of data in test set: 40.00%
+
+Checking for potential data leakage:
+No data leakage detected. Train and test sets have no overlapping indices.
+========== End of Data processing Q5. ==========
+
+========== Answer for Modelling Q1. ==========
+Feature Coefficients under Linear Regression:
+Sex            : 0.7901
+Length         : -0.8853
+Diameter       : 12.2476
+Height         : 9.6136
+Whole weight   : 8.7868
+Shucked weight : -19.3891
+Viscera weight : -9.8376
+Shell weight   : 8.1180
+Intercept: 3.0623
+
+Test RMSE: 2.1363
+Test R-squared: 0.5519
+Test Accuracy: 0.2353
+
+Feature Coefficients under Logistic Regression:
+Sex            : 0.9272
+Length         : 3.0693
+Diameter       : 2.8584
+Height         : 1.3577
+Whole weight   : 3.3209
+Shucked weight : -1.6078
+Viscera weight : 0.9559
+Shell weight   : 3.4804
+Intercept: -3.7697
+
+Logistic Regression AUC: 0.9413
+Logistic Regression Accuracy: 0.9042
+Regressions have been saved as 'images/regression_and_classification_analysis.png'
+========== End of Modelling Q1. ==========
+
+========== Answer for Modelling Q2. ==========
+              Model         Normalization  Test RMSE  Test R-squared  Test Accuracy  Test AUC
+  Linear Regression Without Normalization   2.136308        0.551911       0.235329       NaN
+Logistic Regression Without Normalization        NaN             NaN       0.863473  0.943057
+  Linear Regression    With Normalization   2.136308        0.551911       0.235329       NaN
+Logistic Regression    With Normalization        NaN             NaN       0.868862  0.942478
+'images/model_comparison_with_auc.png' has been saved.
+========== End of Modelling Q2. ==========
+
+========== Answer for Modelling Q3. ==========
+Regression Analysis Results:
+Selected features: ['Shell weight', 'Diameter']
+
+Linear Regression:
+Test RMSE: 2.5007
+Test R-squared: 0.3860
+Test Accuracy: 0.1689
+
+Logistic Regression:
+Test Accuracy: 0.8695
+Test AUC: 0.9410
+Confusion Matrix:
+ [[ 313   33]
+ [ 185 1139]]
+
+Classification Report (Logistic Regression):
+              precision    recall  f1-score   support
+
+           0       0.63      0.90      0.74       346
+           1       0.97      0.86      0.91      1324
+
+    accuracy                           0.87      1670
+   macro avg       0.80      0.88      0.83      1670
+weighted avg       0.90      0.87      0.88      1670
+
+'images/regression_comparison.png' has been saved.
+========== End of Modelling Q3. ==========
+
+========== Answer for Modelling Q4. ==========
+Starting grid search...
+Fitting 5 folds for each of 30 candidates, totalling 150 fits
+Parameter combination 1:
+  Hidden layers: (50,)
+  Learning rate: 0.1
+  Mean squared error: 9.9049 (+/- 1.4884)
+
+Parameter combination 2:
+  Hidden layers: (50,)
+  Learning rate: 0.01
+  Mean squared error: 7.6715 (+/- 8.2804)
+
+Parameter combination 3:
+  Hidden layers: (50,)
+  Learning rate: 0.001
+  Mean squared error: 5.0722 (+/- 1.4896)
+
+Parameter combination 4:
+  Hidden layers: (100,)
+  Learning rate: 0.1
+  Mean squared error: 7.6100 (+/- 2.5348)
+
+Parameter combination 5:
+  Hidden layers: (100,)
+  Learning rate: 0.01
+  Mean squared error: 6.5189 (+/- 2.4275)
+
+Parameter combination 6:
+  Hidden layers: (100,)
+  Learning rate: 0.001
+  Mean squared error: 5.0005 (+/- 1.4768)
+
+Parameter combination 7:
+  Hidden layers: (50, 25)
+  Learning rate: 0.1
+  Mean squared error: 10.5998 (+/- 2.6451)
+
+Parameter combination 8:
+  Hidden layers: (50, 25)
+  Learning rate: 0.01
+  Mean squared error: 6.1747 (+/- 1.5220)
+
+Parameter combination 9:
+  Hidden layers: (50, 25)
+  Learning rate: 0.001
+  Mean squared error: 6.1261 (+/- 3.3405)
+
+Parameter combination 10:
+  Hidden layers: (25, 10)
+  Learning rate: 0.1
+  Mean squared error: 10.6473 (+/- 2.6068)
+
+Parameter combination 11:
+  Hidden layers: (25, 10)
+  Learning rate: 0.01
+  Mean squared error: 9.1557 (+/- 6.5226)
+
+Parameter combination 12:
+  Hidden layers: (25, 10)
+  Learning rate: 0.001
+  Mean squared error: 4.9328 (+/- 1.5132)
+
+Parameter combination 13:
+  Hidden layers: (25, 50)
+  Learning rate: 0.1
+  Mean squared error: 11.4379 (+/- 3.4011)
+
+Parameter combination 14:
+  Hidden layers: (25, 50)
+  Learning rate: 0.01
+  Mean squared error: 7.5304 (+/- 5.0217)
+
+Parameter combination 15:
+  Hidden layers: (25, 50)
+  Learning rate: 0.001
+  Mean squared error: 5.6510 (+/- 2.4441)
+
+Parameter combination 16:
+  Hidden layers: (10, 25)
+  Learning rate: 0.1
+  Mean squared error: 10.6161 (+/- 2.4849)
+
+Parameter combination 17:
+  Hidden layers: (10, 25)
+  Learning rate: 0.01
+  Mean squared error: 5.9350 (+/- 1.7724)
+
+Parameter combination 18:
+  Hidden layers: (10, 25)
+  Learning rate: 0.001
+  Mean squared error: 5.0204 (+/- 1.6695)
+
+Parameter combination 19:
+  Hidden layers: (50, 50)
+  Learning rate: 0.1
+  Mean squared error: 10.5825 (+/- 2.4709)
+
+Parameter combination 20:
+  Hidden layers: (50, 50)
+  Learning rate: 0.01
+  Mean squared error: 8.4160 (+/- 4.3379)
+
+Parameter combination 21:
+  Hidden layers: (50, 50)
+  Learning rate: 0.001
+  Mean squared error: 4.9973 (+/- 1.4275)
+
+Parameter combination 22:
+  Hidden layers: (25, 25)
+  Learning rate: 0.1
+  Mean squared error: 10.6040 (+/- 2.5787)
+
+Parameter combination 23:
+  Hidden layers: (25, 25)
+  Learning rate: 0.01
+  Mean squared error: 8.5093 (+/- 5.8412)
+
+Parameter combination 24:
+  Hidden layers: (25, 25)
+  Learning rate: 0.001
+  Mean squared error: 4.8529 (+/- 1.4763)
+
+Parameter combination 25:
+  Hidden layers: (50, 25, 10)
+  Learning rate: 0.1
+  Mean squared error: 10.5768 (+/- 2.5250)
+
+Parameter combination 26:
+  Hidden layers: (50, 25, 10)
+  Learning rate: 0.01
+  Mean squared error: 7.6183 (+/- 5.6581)
+
+Parameter combination 27:
+  Hidden layers: (50, 25, 10)
+  Learning rate: 0.001
+  Mean squared error: 6.5612 (+/- 4.9015)
+
+Parameter combination 28:
+  Hidden layers: (10, 25, 50)
+  Learning rate: 0.1
+  Mean squared error: 10.7291 (+/- 2.3532)
+
+Parameter combination 29:
+  Hidden layers: (10, 25, 50)
+  Learning rate: 0.01
+  Mean squared error: 12.2200 (+/- 9.7452)
+
+Parameter combination 30:
+  Hidden layers: (10, 25, 50)
+  Learning rate: 0.001
+  Mean squared error: 5.5107 (+/- 1.5858)
+
+Grid search completed.
+- - - - - - - - - - - - - - - - - - - - 
+Best parameter combination:
+  Hidden layers: (25, 25)
+  Learning rate: 0.001
+  Best mean squared error: 4.8529
+
+Neural Network Final Results:
+Test MSE: 4.2525
+Test RMSE: 2.0622
+Test MAE: 1.4556
+Test R-squared: 0.5825
+Test Accuracy: 0.2689
+'images/nn_actual_vs_predicted.png' has been saved.
+========== End of Modelling Q4. ==========
+
+========== Answer for Modelling Q5. ==========
+========== End of Modelling Q5. ==========
+
