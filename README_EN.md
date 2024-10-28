@@ -2,12 +2,6 @@
 
 **Warning: This is group assignment content. DO NOT share with anyone outside the group!**
 
-## Issues to Address
-1. ROC and AUC sections need correction
-2. P2Q5 (commentary section) currently uses GPT-generated content, needs revision
-   * All commentary sections may need review
-3. Need to check for any missing questions
-
 ## Repository Usage Guide
 
 ### 1. Get the Code
@@ -43,5 +37,3 @@ Check the README file for specific running instructions, typically:
 ```bash
 python main.py
 ```
-
-Would you like me to help format this content in a specific file format or provide more detailed explanations for any sections?
